@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="transition-colors duration-300">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard ERP/CRM — Demo (Front)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
+
+  <!-- Header simples (substitui partials) -->
+  <header class="fixed top-0 left-0 right-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur border-b border-gray-200 dark:border-gray-700 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded bg-blue-600"></div>
+        <div>
+          <div class="font-extrabold leading-tight">Dashboard</div>
+          <div class="text-xs text-gray-600 dark:text-gray-300">Demo 100% Front-end</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="btnDark"
+          class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition">
+          🌙 Dark
+        </button>
+        <button id="btnReset"
+          class="px-3 py-2 rounded bg-red-600 hover:bg-red-700 text-white transition">
+          Reset
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container max-w-7xl mx-auto px-6 pt-24 pb-16 flex flex-col gap-12">
+
+    <h1 class="text-4xl font-extrabold tracking-tight text-blue-700 dark:text-blue-400 mb-2">
+      Dashboard
+    </h1>
+
+    <!-- Filtro (demo: só recalcula localmente) -->
+    <form id="formFiltro" class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <div>
+        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Quiosque:</label>
+        <select id="quiosqueSel"
+          class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+          <option value="">Todos os Quiosques</option>
+          <option value="Q01">Q01 — Central</option>
+          <option value="Q02">Q02 — Norte</option>
+          <option value="Q03">Q03 — Sul</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Data Início:</label>
+        <input id="dtIni" type="date"
+          class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Data Fim:</label>
+        <input id="dtFim" type="date"
+          class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Margem (%):</label>
+        <input id="margem" type="number" min="0" max="200" step="0.1" value="55"
+          class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
+      </div>
+
+      <div class="md:col-span-4 flex gap-4 justify-end mt-2">
+        <button type="submit"
+          class="bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 text-white font-semibold py-3 px-6 rounded-md transition duration-200 shadow-md">
+          Filtrar
+        </button>
+        <button type="button" id="btnPeriodoCompleto"
+          class="bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 text-white font-semibold py-3 px-6 rounded-md transition duration-200 shadow-md">
+          Todo o Período
+        </button>
+        <button type="button" id="btnCopiarRelatorio"
+          class="bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-300 text-white font-semibold py-3 px-6 rounded-md transition duration-200 shadow-md">
+          Copiar Relatório (Data / Qntd / Valor)
+        </button>
+      </div>
+    </form>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8" id="kpis">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center transition-transform hover:scale-[1.03]">
+        <h2 class="text-lg font-semibold text-green-600 dark:text-green-400 mb-2">Receita Bruta</h2>
+        <p id="kpiReceita" class="text-3xl font-bold">R$ 0,00</p>
+        <div class="mt-3 text-sm text-gray-600 dark:text-gray-300 space-y-1">
+          <div>
+            <span class="inline-block px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 mr-2">Bruta</span>
+            <span id="kpiMargemBruta" class="font-semibold">0,0%</span>
+          </div>
+          <div>
+            <span class="inline-block px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 mr-2">Líquida</span>
+            <span id="kpiMargemLiq" class="font-semibold">0,0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center transition-transform hover:scale-[1.03]">
+        <h2 class="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-2">Ticket Médio</h2>
+        <p id="kpiTicket" class="text-3xl font-bold">R$ 0,00</p>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center transition-transform hover:scale-[1.03]">
+        <h2 class="text-lg font-semibold text-yellow-600 dark:text-yellow-400 mb-2">Total de Vendas</h2>
+        <p id="kpiVendas" class="text-3xl font-bold">0</p>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center transition-transform hover:scale-[1.03]">
+        <h2 class="text-lg font-semibold text-pink-600 dark:text-pink-400 mb-2">Produtos Vendidos</h2>
+        <p id="kpiProdutos" class="text-3xl font-bold">0</p>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col items-center transition-transform hover:scale-[1.03]">
+        <h2 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">Mais Vendida</h2>
+        <p id="kpiMaisVendida" class="text-xl font-semibold">—</p>
+      </div>
+    </div>
+
+    <!-- GRÁFICOS -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <section class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Vendas Diárias (Quantidade)</h2>
+        <canvas id="graficoLinhaVendas" class="max-h-80"></canvas>
+      </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Vendas por Dia (R$)</h2>
+        <canvas id="graficoVendas" class="max-h-80"></canvas>
+      </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between mb-2">
+          <h2 id="tituloListaMaisVendidos" class="text-xl font-semibold text-gray-800 dark:text-gray-200">
+            Mais Vendidos (Quantidade) — Boneca
+          </h2>
+
+          <div class="flex items-center gap-2">
+            <button type="button" id="btnListaBoneca"
+              class="px-3 py-1 text-sm rounded border border-blue-300 dark:border-blue-700">
+              Boneca
+            </button>
+            <button type="button" id="btnListaAcessorio"
+              class="px-3 py-1 text-sm rounded border border-blue-300 dark:border-blue-700">
+              Acessório
+            </button>
+          </div>
+        </div>
+
+        <div id="resumoTop10" class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3"></div>
+        <div id="listaMaisVendidos" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+      </section>
+
+      <section class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 lg:col-span-3">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">
+            Pódio de Vendedoras (Barras)
+          </h2>
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            Demo • ordenado por receita
+          </div>
+        </div>
+
+        <div id="cardsPodio" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4"></div>
+        <canvas id="graficoPodioVendedoras" class="max-h-[520px]"></canvas>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div class="max-w-7xl mx-auto px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+      Demo local — sem EJS • sem backend • dados mockados
+    </div>
+  </footer>
+
+<script>
+/* =========================================================
+   MOCK: base de dados (gerada na hora)
+   ========================================================= */
+function rnd(min, max){ return Math.random() * (max - min) + min; }
+function asDateISO(d){
+  const x = new Date(d);
+  const mm = String(x.getMonth()+1).padStart(2,'0');
+  const dd = String(x.getDate()).padStart(2,'0');
+  return `${x.getFullYear()}-${mm}-${dd}`;
+}
+function moneyBR(n){
+  return Number(n||0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+function decBR(n){
+  return Number(n||0).toFixed(1).replace('.', ',');
+}
+
+const MOCK = {
+  quiosques: ["Q01","Q02","Q03"],
+  operadores: ["Ana","Bea","Carla","Dani","Evelyn","Fabi","Gabi","Helena","Iara"],
+  bonecas: ["RB-001","RB-002","RB-003","RB-004","RB-005","RB-006","RB-007","RB-008","RB-009","RB-010"],
+  acessorios: ["AC-101","AC-202","AC-303","AC-404","AC-505","CH-010","CH-020","KIT-100","KIT-200","KIT-300"],
+};
+
+// gera dados diários do “período completo” (últimos 30 dias)
+function gerarBase30Dias(){
+  const hoje = new Date();
+  const base = [];
+  for (let i=29; i>=0; i--){
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() - i);
+
+    // simulando sazonalidade simples
+    const weekday = d.getDay(); // 0 dom
+    const fator = (weekday === 0 || weekday === 6) ? 1.25 : 1.0;
+
+    const qtd = Math.round(rnd(18, 55) * fator);
+    const valor = qtd * rnd(80, 160) * fator;
+
+    base.push({
+      data: asDateISO(d),
+      qtd,
+      valor,
+      quiosque: MOCK.quiosques[Math.floor(rnd(0, MOCK.quiosques.length))],
+    });
+  }
+  return base;
+}
+
+const BASE_DIAS = gerarBase30Dias();
+
+// gera “top vendidos” (qtd)
+function gerarTop(produtos, total){
+  const obj = {};
+  const picks = [...produtos].sort(() => Math.random()-0.5).slice(0, 10);
+  let rest = total;
+  picks.forEach((sku, i) => {
+    const v = i === picks.length-1 ? rest : Math.max(1, Math.round(rnd(1, rest/(picks.length-i))));
+    obj[sku] = v;
+    rest -= v;
+  });
+  return obj;
+}
+
+// gera vendas por operador (p/ pódio)
+function gerarOperadores(){
+  const obj = {};
+  MOCK.operadores.forEach(op => {
+    const vendas = Math.round(rnd(10, 70));
+    const itens = Math.round(vendas * rnd(1.2, 2.8));
+    const receita = vendas * rnd(90, 220);
+    obj[op] = { vendas, itens, receita };
+  });
+  return obj;
+}
+
+/* =========================================================
+   Estado + filtro
+   ========================================================= */
+const state = {
+  quiosque: "",
+  dtIni: "",
+  dtFim: "",
+  margem: 55,
+};
+
+function aplicarFiltro(){
+  let rows = BASE_DIAS.slice();
+
+  if (state.quiosque) rows = rows.filter(r => r.quiosque === state.quiosque);
+  if (state.dtIni) rows = rows.filter(r => r.data >= state.dtIni);
+  if (state.dtFim) rows = rows.filter(r => r.data <= state.dtFim);
+
+  // agregações
+  const vendasPorDiaQtd = {};
+  const vendasPorDiaValor = {};
+  let totalVendas = 0;
+  let totalProdutos = 0;
+  let receita = 0;
+
+  rows.forEach(r => {
+    vendasPorDiaQtd[r.data] = (vendasPorDiaQtd[r.data] || 0) + r.qtd;
+    vendasPorDiaValor[r.data] = (vendasPorDiaValor[r.data] || 0) + r.valor;
+    totalVendas += Math.max(1, Math.round(r.qtd / rnd(1.6, 2.8))); // aproxima “vendas”
+    totalProdutos += r.qtd;
+    receita += r.valor;
+  });
+
+  const ticket = totalVendas ? (receita / totalVendas) : 0;
+
+  // top e pódio: (simples — regenerado por filtro pra “parecer real”)
+  const topBonecas = gerarTop(MOCK.bonecas, Math.max(10, Math.round(totalProdutos * 0.55)));
+  const topAcessorios = gerarTop(MOCK.acessorios, Math.max(10, Math.round(totalProdutos * 0.45)));
+
+  const bonecaTopSku = Object.entries(topBonecas).sort((a,b)=>b[1]-a[1])[0]?.[0] || "N/A";
+  const operadorData = gerarOperadores();
+
+  // margens (demo): bruta “chuta” um pouco acima da líquida
+  const margemLiq = Number(state.margem || 0);
+  const margemBruta = Math.min(100, margemLiq + 12);
+
+  return {
+    vendasPorDiaQtd,
+    vendasPorDiaValor,
+    topBonecas,
+    topAcessorios,
+    totalVendas,
+    totalProdutos,
+    receita,
+    ticket,
+    margemBruta,
+    margemLiq,
+    maisVendida: bonecaTopSku,
+    vendasPorOperador: operadorData,
+  };
+}
+
+/* =========================================================
+   Render KPIs + Lista + Charts
+   ========================================================= */
+let chartLinha = null;
+let chartBar = null;
+let chartPodio = null;
+
+function destruirCharts(){
+  [chartLinha, chartBar, chartPodio].forEach(c => c && c.destroy());
+  chartLinha = chartBar = chartPodio = null;
+}
+
+function renderKpis(data){
+  document.getElementById("kpiReceita").textContent = moneyBR(data.receita);
+  document.getElementById("kpiTicket").textContent = moneyBR(data.ticket);
+  document.getElementById("kpiVendas").textContent = String(data.totalVendas);
+  document.getElementById("kpiProdutos").textContent = String(data.totalProdutos);
+  document.getElementById("kpiMaisVendida").textContent = data.maisVendida;
+
+  document.getElementById("kpiMargemBruta").textContent = `${decBR(data.margemBruta)}%`;
+  document.getElementById("kpiMargemLiq").textContent = `${decBR(data.margemLiq)}%`;
+}
+
+let tipoLista = "boneca";
+
+function setActiveBtn(btn, on){
+  btn.classList.toggle("bg-blue-600", on);
+  btn.classList.toggle("text-white", on);
+}
+
+function renderListaMaisVendidos(data){
+  const tituloEl = document.getElementById("tituloListaMaisVendidos");
+  const resumoEl = document.getElementById("resumoTop10");
+  const listEl = document.getElementById("listaMaisVendidos");
+
+  const src = (tipoLista === "boneca") ? data.topBonecas : data.topAcessorios;
+  const items = Object.entries(src).map(([sku, qtd]) => ({ sku, qtd: Number(qtd||0) }))
+    .sort((a,b)=>b.qtd-a.qtd);
+
+  tituloEl.textContent = `Mais Vendidos (Quantidade) — ${tipoLista === "boneca" ? "Boneca" : "Acessório"}`;
+
+  if (!items.length){
+    resumoEl.textContent = "";
+    listEl.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Sem dados</div>`;
+    return;
+  }
+
+  const totalTop10 = items.reduce((acc,it)=>acc+it.qtd, 0);
+  const percNoTotal = data.totalProdutos ? (totalTop10 / data.totalProdutos) * 100 : 0;
+
+  resumoEl.innerHTML = `Top 10: <strong>${totalTop10}</strong> unid. • <strong>${percNoTotal.toFixed(1).replace('.',',')}%</strong> do total vendido`;
+
+  const medal = (i)=> i===0?"🥇":i===1?"🥈":i===2?"🥉":String(i+1);
+
+  listEl.innerHTML = items.map((it, i) => {
+    const perc = totalTop10 ? (it.qtd/totalTop10)*100 : 0;
+    return `
+      <div class="flex items-center justify-between px-3 py-2 rounded-lg
+                  bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-3">
+          <span class="w-8 text-center text-sm font-semibold">${medal(i)}</span>
+          <div>
+            <div class="text-sm font-semibold">${it.sku}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">${it.qtd} unid. • ${perc.toFixed(1).replace('.',',')}%</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderCharts(data){
+  const datas = Object.keys(data.vendasPorDiaQtd).sort();
+  const vendasQtd = datas.map(d => data.vendasPorDiaQtd[d]);
+  const vendasValor = datas.map(d => data.vendasPorDiaValor[d]);
+
+  // Linha (qtd)
+  const ctx1 = document.getElementById("graficoLinhaVendas").getContext("2d");
+  chartLinha = new Chart(ctx1, {
+    type: "line",
+    data: {
+      labels: datas,
+      datasets: [{
+        label: "Vendas Diárias (Quantidade)",
+        data: vendasQtd,
+        borderColor: "rgba(59,130,246,1)",
+        backgroundColor: "rgba(59,130,246,0.25)",
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+        borderWidth: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      interaction: { mode: "nearest", intersect: false },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Barras (valor)
+  const ctx2 = document.getElementById("graficoVendas").getContext("2d");
+  chartBar = new Chart(ctx2, {
+    type: "bar",
+    data: {
+      labels: datas,
+      datasets: [{
+        label: "Vendas por Dia (R$)",
+        data: vendasValor,
+        backgroundColor: "rgba(59,130,246,0.75)",
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Pódio vendedoras
+  const arr = Object.entries(data.vendasPorOperador).map(([operador, s]) => ({
+    operador,
+    receita: Number(s.receita||0),
+    vendas: Number(s.vendas||0),
+    itens: Number(s.itens||0),
+  })).sort((a,b)=>b.receita-a.receita);
+
+  // cards top 3
+  const podio = arr.slice(0,3);
+  const medal = ["🥇","🥈","🥉"];
+  document.getElementById("cardsPodio").innerHTML = podio.map((p, i) => `
+    <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
+      <div class="flex items-center justify-between">
+        <div class="text-2xl">${medal[i]}</div>
+        <div class="text-right">
+          <div class="text-sm text-gray-500 dark:text-gray-400">Vendas</div>
+          <div class="text-xl font-bold">${p.vendas}</div>
+        </div>
+      </div>
+      <div class="mt-2 font-semibold">${p.operador}</div>
+      <div class="text-sm text-gray-600 dark:text-gray-300">Receita: ${moneyBR(p.receita)}</div>
+      <div class="text-sm text-gray-600 dark:text-gray-300">Itens: ${p.itens}</div>
+    </div>
+  `).join("");
+
+  const labels = arr.map((r,i)=>`#${i+1} ${r.operador}`);
+  const values = arr.map(r=>r.vendas);
+  const colors = arr.map((_,i)=> i===0 ? "#f59e0b" : i===1 ? "#9ca3af" : i===2 ? "#b45309" : "rgba(59,130,246,0.8)");
+
+  const ctx3 = document.getElementById("graficoPodioVendedoras").getContext("2d");
+  chartPodio = new Chart(ctx3, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Vendas",
+        data: values,
+        backgroundColor: colors
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: "y",
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const r = arr[ctx.dataIndex];
+              return ` ${r.vendas} vendas • ${moneyBR(r.receita)}`;
+            }
+          }
+        }
+      },
+      scales: { x: { beginAtZero: true } }
+    }
+  });
+}
+
+/* =========================================================
+   Copiar relatório
+   ========================================================= */
+function copiarRelatorio(data){
+  const datas = Object.keys(data.vendasPorDiaQtd).sort();
+  if (!datas.length) return alert("Sem linhas pra copiar.");
+
+  const linhas = datas.map(d => [d, String(data.vendasPorDiaQtd[d]||0), String((data.vendasPorDiaValor[d]||0).toFixed(2)).replace('.',',')].join("\t"));
+  const texto = ["Data\tQuantidade\tValor", ...linhas].join("\n");
+
+  navigator.clipboard.writeText(texto)
+    .then(()=>alert("Copiado com sucesso!"))
+    .catch(()=>alert("Erro ao copiar."));
+}
+
+/* =========================================================
+   UI / Eventos
+   ========================================================= */
+function renderTudo(){
+  const data = aplicarFiltro();
+  destruirCharts();
+  renderKpis(data);
+  renderListaMaisVendidos(data);
+  renderCharts(data);
+  window.__DATA_ATUAL__ = data; // debug
+}
+
+document.getElementById("formFiltro").addEventListener("submit", (e)=>{
+  e.preventDefault();
+  state.quiosque = document.getElementById("quiosqueSel").value;
+  state.dtIni = document.getElementById("dtIni").value;
+  state.dtFim = document.getElementById("dtFim").value;
+  state.margem = Number(document.getElementById("margem").value || 0);
+  renderTudo();
+});
+
+document.getElementById("btnPeriodoCompleto").addEventListener("click", ()=>{
+  document.getElementById("quiosqueSel").value = "";
+  document.getElementById("dtIni").value = "";
+  document.getElementById("dtFim").value = "";
+  renderTudo();
+});
+
+document.getElementById("btnCopiarRelatorio").addEventListener("click", ()=>{
+  copiarRelatorio(window.__DATA_ATUAL__ || aplicarFiltro());
+});
+
+// Switch lista
+const btnBoneca = document.getElementById("btnListaBoneca");
+const btnAcess = document.getElementById("btnListaAcessorio");
+
+btnBoneca.addEventListener("click", ()=>{
+  tipoLista = "boneca";
+  setActiveBtn(btnBoneca, true);
+  setActiveBtn(btnAcess, false);
+  renderListaMaisVendidos(window.__DATA_ATUAL__ || aplicarFiltro());
+});
+btnAcess.addEventListener("click", ()=>{
+  tipoLista = "acessorio";
+  setActiveBtn(btnBoneca, false);
+  setActiveBtn(btnAcess, true);
+  renderListaMaisVendidos(window.__DATA_ATUAL__ || aplicarFiltro());
+});
+
+// Dark mode
+const btnDark = document.getElementById("btnDark");
+function applyDark(on){
+  document.documentElement.classList.toggle("dark", on);
+  localStorage.setItem("dash_dark", on ? "1" : "0");
+  btnDark.textContent = on ? "☀️ Light" : "🌙 Dark";
+}
+btnDark.addEventListener("click", ()=>{
+  applyDark(!document.documentElement.classList.contains("dark"));
+});
+applyDark(localStorage.getItem("dash_dark")==="1");
+
+// Reset
+document.getElementById("btnReset").addEventListener("click", ()=>{
+  localStorage.removeItem("dash_dark");
+  applyDark(false);
+  document.getElementById("quiosqueSel").value = "";
+  document.getElementById("dtIni").value = "";
+  document.getElementById("dtFim").value = "";
+  document.getElementById("margem").value = "55";
+  state.quiosque = ""; state.dtIni = ""; state.dtFim = ""; state.margem = 55;
+  renderTudo();
+});
+
+// inicial
+setActiveBtn(btnBoneca, true);
+setActiveBtn(btnAcess, false);
+renderTudo();
+</script>
+
+</body>
+</html>
